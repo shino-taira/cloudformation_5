@@ -1,0 +1,210 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create VPC 
+
+#========================================================================
+# メタデータ(コンソール画面でパラメータのグループ化や順序の指定ができる)
+#========================================================================
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          Default: "PJPrefix"
+        Parameters:
+          - PJPrefix
+      - Label:
+          Default: Network Layer Configuration 
+        Parameters:
+          - AvailabilityZone
+          - VPCCIDR 
+          - PublicSubnet1aCIDR
+          - PublicSubnet1cCIDR
+          - PrivateSubnet1aCIDR
+          - PrivateSubnet1cCIDR
+
+    ParameterLabels:
+      AvailabilityZone:
+        Default: Availability Zone
+      VPCCIDR:
+        Default: VPC CIDR 
+      PublicSubnet1aCIDR:
+        Default: PublicSubnet1a CIDR
+      PublicSubnet1cCIDR:
+        Default: PublicSubnet1c CIDR
+      PrivateSubnet1aCIDR:
+        Default: PrivateSubnet1a CIDR
+      PrivateSubnet1cCIDR:
+        Default: PrivateSubnet1c CIDR
+
+#====================================================
+# パラメータ(コンソール画面上で指定できる項目)
+#====================================================
+Parameters:
+  PJPrefix:
+    Type: String
+
+  AvailabilityZone:
+    Type: String 
+    Default: ap-northeast-1
+
+  VPCCIDR:
+    Type: String
+    Default: 10.0.0.0/16
+    
+  PublicSubnet1aCIDR:
+    Type: String
+    Default: 10.0.10.0/24
+
+  PublicSubnet1cCIDR:
+    Type: String
+    Default: 10.0.20.0/24
+
+  PrivateSubnet1aCIDR:
+    Type: String
+    Default: 10.0.30.0/24
+
+  PrivateSubnet1cCIDR:
+    Type: String
+    Default: 10.0.40.0/24
+
+
+Resources: 
+#--------------------------------
+# VPC
+#--------------------------------
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VPCCIDR 
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${PJPrefix}-vpc
+
+#--------------------------------------------
+# パブリックサブネット(ELB作成のため2つ必要 1a/1c)
+#--------------------------------------------
+  PublicSubnet1a:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Sub ${AvailabilityZone}a
+      CidrBlock: !Ref PublicSubnet1aCIDR
+      VpcId: !Ref VPC # Required
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${PJPrefix}-public-subnet1a
+
+  PublicSubnet1c:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Sub ${AvailabilityZone}c
+      CidrBlock: !Ref PublicSubnet1cCIDR
+      VpcId: !Ref VPC # Required
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${PJPrefix}-public-subnet1c
+
+#------------------------------------------------------------
+# プライベートサブネット(RDSサブネットグループ作成のため2つ必要 1a/1c)
+#------------------------------------------------------------
+  PrivateSubnet1a:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Sub ${AvailabilityZone}a
+      CidrBlock: !Ref PrivateSubnet1aCIDR
+      VpcId: !Ref VPC # Required      
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub ${PJPrefix}-private-subnet1a
+
+  PrivateSubnet1c:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Sub ${AvailabilityZone}c
+      CidrBlock: !Ref PrivateSubnet1cCIDR
+      VpcId: !Ref VPC # Required      
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub ${PJPrefix}-private-subnet1c
+
+#---------------------------
+# インターネットゲートウェイ
+#---------------------------
+  IGW:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub ${PJPrefix}-igw
+
+#インターネットゲートウェイをVPCにアタッチ
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC # Required
+      InternetGatewayId: !Ref IGW
+
+#--------------------------------------
+# パブリックサブネットのルートテーブルを作成
+#--------------------------------------
+  RouteTablePublic:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC # Required
+      Tags:
+        - Key: Name
+          Value: !Sub ${PJPrefix}-rt-pub
+
+#ルート先にIGWを定義
+  RoutePublic:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref IGW
+      RouteTableId: !Ref RouteTablePublic # Required
+ 
+#ルートテーブルをパブリックサブネットに関連付け
+  PublicSubnetRouteTableAssociation1a:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTablePublic # Required
+      SubnetId: !Ref PublicSubnet1a # Required
+
+  PublicSubnetRouteTableAssociation1c:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTablePublic # Required
+      SubnetId: !Ref PublicSubnet1c # Required
+
+
+Outputs:
+  VPCId:
+    Value: !Ref VPC
+    Export: 
+      Name: VPCId 
+
+  PublicSubnet1aId:
+    Value: !Ref PublicSubnet1a
+    Export: 
+      Name: PublicSubnet1aId
+
+  PublicSubnet1cId:
+    Value: !Ref PublicSubnet1c
+    Export: 
+      Name: PublicSubnet1cId
+
+  PrivateSubnet1aId:
+    Value: !Ref PrivateSubnet1a
+    Export: 
+      Name: PrivateSubnet1aId 
+
+  PrivateSubnet1cId:
+    Value: !Ref PrivateSubnet1c
+    Export: 
+      Name: PrivateSubnet1cId
+
+    

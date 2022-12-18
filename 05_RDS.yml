@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create RDS 
+
+Parameters:
+#RDSのMasterUsserPassword
+  PJPrefix:
+    Type: String
+
+  AvailabilityZone:
+    Type: String 
+    Default: ap-northeast-1
+
+  DBPassword:
+    Type: String 
+    Default: password
+    NoEcho: true   
+
+Resources: 
+#RDSインスタンス
+  RDSInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage: 20
+      AvailabilityZone: !Sub ${AvailabilityZone}a
+      DBInstanceClass: db.t2.micro # Required
+      DBInstanceIdentifier: !Sub ${PJPrefix}-rds #DBインスタンスの名前(小文字)
+      DBName: !Sub ${PJPrefix}RDS
+      DBParameterGroupName: !Ref RDSParameterGroup
+      DBSubnetGroupName: !Ref RDSSubnetGroup
+      Engine: mysql
+      EngineVersion: 8.0.28
+      MasterUserPassword: !Ref DBPassword
+      MasterUsername: admin 
+      VPCSecurityGroups:
+        - !Ref RDSSecurityGroup
+
+#サブネットグループ
+  RDSSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: SubnetGroup for RDS # Required
+      DBSubnetGroupName: !Sub ${PJPrefix}-subnet-group #小文字
+      SubnetIds: # Required
+        - !ImportValue PrivateSubnet1aId
+        - !ImportValue PrivateSubnet1cId
+
+#RDSのセキュリティグループ
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: MySQL access for RDS # Required
+      SecurityGroupIngress:
+        - IpProtocol: tcp #MySQL
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: 0.0.0.0/0 
+      Tags:
+        - Key: Name 
+          Value: !Sub ${PJPrefix}-sg-rds
+      VpcId: !ImportValue VPCId 
+
+#RDSのパラメータグループ
+  RDSParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Description: ParameterGroup for RDS # Required
+      Family: mysql8.0 # Required
+      Tags:
+        - Key: Name
+          Value: !Sub ${PJPrefix}-rds-parametergroup
+
+
+Outputs:
+  RDSInstanceId:
+    Value: !Ref RDSInstance
+    Export: 
+      Name: RDSInstanceId

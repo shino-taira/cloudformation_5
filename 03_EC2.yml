@@ -1,0 +1,59 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create EC2
+
+Parameters:
+  PJPrefix:
+    Type: String
+
+Resources: 
+#EC2インスタンス
+  EC2Instance1a:
+    Type: AWS::EC2::Instance
+    Properties:
+      KeyName: First-key
+      IamInstanceProfile: !ImportValue IAMInstanceProfileId
+      ImageId: ami-0b7546e839d7ace12
+      InstanceType: t2.micro
+      NetworkInterfaces:
+        - SubnetId: !ImportValue PublicSubnet1aId
+          GroupSet:
+            - !Ref SGEC2
+          AssociatePublicIpAddress: true
+          DeviceIndex: 0
+      Tags:
+        - Key: Name
+          Value: !Sub ${PJPrefix}-ec2-1a
+
+#セキュリティグループ(EC2)
+  SGEC2:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SecurityGroup for EC2  
+      VpcId: !ImportValue VPCId 
+      SecurityGroupIngress:
+        - IpProtocol: tcp #SSH
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp #HTTP
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp #Rails
+          FromPort: 3000
+          ToPort: 3000
+          CidrIp: 0.0.0.0/0
+      Tags: 
+        - Key: Name
+          Value: !Sub ${PJPrefix}-sg-ec2
+
+Outputs:
+  EC2Instance1aId:
+    Value: !Ref EC2Instance1a
+    Export: 
+      Name: EC2Instance1aId
+
+  SGEC2Id:
+    Value: !Ref SGEC2
+    Export: 
+      Name: SGEC2Id
