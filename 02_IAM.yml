@@ -1,24 +1,24 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Create IAM Role 
+Description: Create IAM Role
 
 Parameters:
   PJPrefix:
     Type: String
 
-Resources: 
+Resources:
 #IAMロール
   IAMRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument: # Required
         Version: "2012-10-17"
-        Statement: 
+        Statement:
           - Effect: Allow
-            Principal: 
-              Service: 
+            Principal:
+              Service:
                 - ec2.amazonaws.com
             Action:
-              - sts:AssumeRole   
+              - sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonS3FullAccess
       Path: "/"
@@ -29,10 +29,10 @@ Resources:
     Type: AWS::IAM::Policy
     Properties:
       PolicyDocument: # Required
-        Statement: 
-          - Effect: Allow 
+        Statement:
+          - Effect: Allow
             Resource: "*"
-            Action: 
+            Action:
               - ec2:*
       PolicyName: !Sub ${PJPrefix}-iam-policy # Required
       Roles:
@@ -50,10 +50,10 @@ Resources:
 Outputs:
   IAMRoleId:
     Value: !Ref IAMRole
-    Export: 
+    Export:
       Name: IAMRoleId
 
   IAMInstanceProfileId:
     Value: !Ref IAMInstanceProfile
-    Export: 
+    Export:
       Name: IAMInstanceProfileId

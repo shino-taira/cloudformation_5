@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Create RDS 
+Description: Create RDS
 
 Parameters:
 #RDSのMasterUsserPassword
@@ -7,15 +7,15 @@ Parameters:
     Type: String
 
   AvailabilityZone:
-    Type: String 
+    Type: String
     Default: ap-northeast-1
 
   DBPassword:
-    Type: String 
+    Type: String
     Default: password
-    NoEcho: true   
+    NoEcho: true
 
-Resources: 
+Resources:
 #RDSインスタンス
   RDSInstance:
     Type: AWS::RDS::DBInstance
@@ -30,7 +30,7 @@ Resources:
       Engine: mysql
       EngineVersion: 8.0.28
       MasterUserPassword: !Ref DBPassword
-      MasterUsername: admin 
+      MasterUsername: admin
       VPCSecurityGroups:
         - !Ref RDSSecurityGroup
 
@@ -53,11 +53,11 @@ Resources:
         - IpProtocol: tcp #MySQL
           FromPort: 3306
           ToPort: 3306
-          CidrIp: 0.0.0.0/0 
+          CidrIp: 0.0.0.0/0
       Tags:
-        - Key: Name 
+        - Key: Name
           Value: !Sub ${PJPrefix}-sg-rds
-      VpcId: !ImportValue VPCId 
+      VpcId: !ImportValue VPCId
 
 #RDSのパラメータグループ
   RDSParameterGroup:
@@ -73,5 +73,5 @@ Resources:
 Outputs:
   RDSInstanceId:
     Value: !Ref RDSInstance
-    Export: 
+    Export:
       Name: RDSInstanceId

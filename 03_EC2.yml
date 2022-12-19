@@ -5,7 +5,7 @@ Parameters:
   PJPrefix:
     Type: String
 
-Resources: 
+Resources:
 #EC2インスタンス
   EC2Instance1a:
     Type: AWS::EC2::Instance
@@ -28,8 +28,8 @@ Resources:
   SGEC2:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: SecurityGroup for EC2  
-      VpcId: !ImportValue VPCId 
+      GroupDescription: SecurityGroup for EC2
+      VpcId: !ImportValue VPCId
       SecurityGroupIngress:
         - IpProtocol: tcp #SSH
           FromPort: 22
@@ -43,17 +43,17 @@ Resources:
           FromPort: 3000
           ToPort: 3000
           CidrIp: 0.0.0.0/0
-      Tags: 
+      Tags:
         - Key: Name
           Value: !Sub ${PJPrefix}-sg-ec2
 
 Outputs:
   EC2Instance1aId:
     Value: !Ref EC2Instance1a
-    Export: 
+    Export:
       Name: EC2Instance1aId
 
   SGEC2Id:
     Value: !Ref SGEC2
-    Export: 
+    Export:
       Name: SGEC2Id

@@ -1,11 +1,11 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Create ELB 
+Description: Create ELB
 
 Parameters:
   PJPrefix:
     Type: String
 
-Resources: 
+Resources:
 #ELB(ALB)
   ELB:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -20,19 +20,19 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${PJPrefix}-elb
-      Type: application 
+      Type: application
 
 #ELBターゲットグループ
   ELBTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       Port: 80
-      Protocol: HTTP 
+      Protocol: HTTP
       ProtocolVersion: HTTP1
       Tags:
-        - Key: Name 
+        - Key: Name
           Value: !Sub ${PJPrefix}-elb-tg
-      TargetType: instance 
+      TargetType: instance
       Targets:
         - Id: !ImportValue EC2Instance1aId
       VpcId: !ImportValue VPCId
@@ -46,11 +46,11 @@ Resources:
           Type: forward #forwardは指定されたターゲットグループにリクエストを送信
       LoadBalancerArn: !Ref ELB # Required
       Port: 80
-      Protocol: HTTP 
+      Protocol: HTTP
 
 
 Outputs:
   ELBId:
     Value: !Ref ELB
-    Export: 
+    Export:
       Name: ELBId
