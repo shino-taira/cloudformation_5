@@ -57,4 +57,3 @@ Outputs:
     Value: !Ref IAMInstanceProfile
     Export: 
       Name: IAMInstanceProfileId
-  

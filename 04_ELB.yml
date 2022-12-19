@@ -54,5 +54,3 @@ Outputs:
     Value: !Ref ELB
     Export: 
       Name: ELBId
-
-  
