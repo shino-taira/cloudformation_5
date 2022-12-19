@@ -1,0 +1,13 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create S3
+
+Parameters:
+  PJPrefix:
+    Type: String
+
+Resources:
+#S3バケット
+  S3:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${PJPrefix}-s3-aloha #グローバルで一意、小文字
